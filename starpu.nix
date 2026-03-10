@@ -1,6 +1,4 @@
 # from https://github.com/PhoqueEberlue/nixpkgs/blob/add-starpu/pkgs/by-name/st/starpu/package.nix
-# TODO: adicionar opções de compilação extra, como debug
-# https://files.inria.fr/starpu/doc/starpu.pdf
 { 
   # derivation dependencies
   lib,
@@ -29,12 +27,14 @@
   linuxPackages,
 
   # Options
-  buildMode ? "debug",
   maxBuffers ? 8,
+  compileAsRelease ? false,
+  enableStarpupy ? false,
   enableSimgrid ? false,
   enableMPI ? false,
   enableCUDA ? false,
   enableTrace ? false,
+  extraOptions ? []
 }:
 let 
     cudaPkgs = with cudaPackages; [
@@ -47,12 +47,7 @@ gcc13Stdenv.mkDerivation (finalAttrs: {
     system = "x86_64-linux";
     version = "1.4.7";
 
-    inherit buildMode;
-    inherit maxBuffers;
-    inherit enableSimgrid;
-    inherit enableMPI;
-    inherit enableCUDA;
-    inherit enableTrace;
+    inherit maxBuffers compileAsRelease enableStarpupy enableSimgrid enableMPI enableCUDA enableTrace extraOptions;
 
     src = fetchurl {
         url = "http://files.inria.fr/starpu/starpu-${finalAttrs.version}/starpu-${finalAttrs.version}.tar.gz";
@@ -70,6 +65,7 @@ gcc13Stdenv.mkDerivation (finalAttrs: {
         ++ lib.optional finalAttrs.enableSimgrid simgrid
         ++ lib.optional finalAttrs.enableMPI mpi
         ++ lib.optional finalAttrs.enableCUDA cudaPkgs
+        ++ lib.optional finalAttrs.enableTrace fxt
         ;
 
     buildInputs = [
@@ -78,12 +74,11 @@ gcc13Stdenv.mkDerivation (finalAttrs: {
         fftw
         fftwFloat
         hwloc
-
-        fxt
     ]
         ++ lib.optional finalAttrs.enableSimgrid simgrid
         ++ lib.optional finalAttrs.enableMPI mpi
         ++ lib.optional finalAttrs.enableCUDA cudaPkgs
+        ++ lib.optional finalAttrs.enableTrace fxt
         ;
 
     
@@ -91,9 +86,10 @@ gcc13Stdenv.mkDerivation (finalAttrs: {
     configureFlags = [
         (lib.enableFeature true "quick-check")
         (lib.enableFeature false "build-examples")
-        (lib.enableFeature finalAttrs.enableSimgrid "simgrid")
+        (lib.enableFeature false "build-doc ")
 
-        (lib.enableFeature false "starpupy")
+        (lib.enableFeature finalAttrs.enableStarpupy "starpupy")
+        (lib.enableFeature finalAttrs.enableSimgrid "simgrid")
 
          # Static linking is mandatory for smpi
         (lib.enableFeature finalAttrs.enableMPI "mpi")
@@ -101,14 +97,14 @@ gcc13Stdenv.mkDerivation (finalAttrs: {
         (lib.enableFeature (!finalAttrs.enableMPI) "shared") 
 
         (lib.optional finalAttrs.enableTrace "--with-fxt=${fxt}")
-    ] ++ (
-        if finalAttrs.buildMode == "debug" then 
-            [ "--enable-debug" "--enable-verbose" "--enable-spinlock-check" ]
-        else
-            if finalAttrs.buildMode == "release" then 
-                [ "--enable-fast" ]
-            else builtins.throw "unrecognized build mode"
-    ) ++ (lib.optional (finalAttrs.maxBuffers != 8) "--enable-maxbuffers=${toString finalAttrs.maxBuffers}");
+    ] 
+    ++ (
+        if finalAttrs.compileAsRelease then [ "--enable-fast" ]
+        else [ "--enable-debug" "--enable-verbose" "--enable-spinlock-check" ]
+    ) 
+    ++ (lib.optional (finalAttrs.maxBuffers != 8) "--enable-maxbuffers=${toString finalAttrs.maxBuffers}")
+    ++ finalAttrs.extraOptions
+    ;
 
 
       # No need to add flags for CUDA, it should be detected by ./configure

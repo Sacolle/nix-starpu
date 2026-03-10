@@ -12,8 +12,7 @@
     outputs = { self, nixpkgs, cudaNixpkgs }: 
     let 
         system = "x86_64-linux";
-
-        cudapkgs = import cudaNixpkgs { 
+        pkgsconfig = { 
             inherit system; 
             config = { 
                 allowUnfree = true;
@@ -21,28 +20,19 @@
                 cudaVersion = "13";
             };
         };
-        pkgs = import nixpkgs {
-            inherit system;
-            config = { 
-                allowUnfree = true;
-                cudaSupport = true;
-                cudaVersion = "13";
-            };
-        };
+        cudapkgs = import cudaNixpkgs pkgsconfig;
+        pkgs = import nixpkgs pkgsconfig;
 
         fxt = pkgs.callPackage ./fxt.nix { static = true; };
         StarPU = pkgs.callPackage ./starpu.nix { 
-            # enableCUDA = true; 
-            # use the proper cuda pkgs for no compilation error 
+            # use the proper cuda pkgs for proper compilation
             cudaPackages  = cudapkgs.cudaPackages;
             linuxPackages = cudapkgs.linuxPackages;
 
             # pass fxt to be able to implement trace 
             inherit fxt;
-
-            #maxBuffers = 56;
-            #enableTrace = true;
         };
+            
     in
     {
         packages.${system} = {
