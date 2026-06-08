@@ -20,37 +20,35 @@
   python313,
   fxt,
 
-  # These two packages may fail to build with current nixpkgs
-  # If that is the case, the current build works for these two packages comming from
-  # nixpkgs.url = "github:nixos/nixpkgs/1da52dd49a127ad74486b135898da2cef8c62665";
   cudaPackages,
-  linuxPackages,
 
   # Options
   maxBuffers ? 8,
   compileAsRelease ? false,
   enableStarpupy ? false,
-  enableSimgrid ? false,
-  enableMPI ? false,
+
+  # have not tested this options yet
+  #enableSimgrid ? false,
+  #enableMPI ? false,
   enableCUDA ? false,
   enableTrace ? false,
   extraOptions ? []
 }:
 let 
-    cudaPkgs = with cudaPackages; [
-        linuxPackages.nvidiaPackages.stable
-        cudatoolkit
+    cudaBuildPkgs = with cudaPackages; [
+        cuda_nvcc
+    ];
+    cudaNativePkgs = with cudaPackages; [
+        cuda_cudart cuda_cccl cuda_nvml_dev
     ];
 in
-gcc13Stdenv.mkDerivation (finalAttrs: {
+gcc13Stdenv.mkDerivation (f: {
     pname = "StarPU";
     system = "x86_64-linux";
     version = "1.4.7";
 
-    inherit maxBuffers compileAsRelease enableStarpupy enableSimgrid enableMPI enableCUDA enableTrace extraOptions;
-
     src = fetchurl {
-        url = "http://files.inria.fr/starpu/starpu-${finalAttrs.version}/starpu-${finalAttrs.version}.tar.gz";
+        url = "http://files.inria.fr/starpu/starpu-${f.version}/starpu-${f.version}.tar.gz";
         hash = "sha256-HrPfVRCJFT/m4LFyrZURhDS0qB6p6qWiw4cl0NtTsT4=";
     };
     nativeBuildInputs = [
@@ -62,10 +60,10 @@ gcc13Stdenv.mkDerivation (finalAttrs: {
         python313
 
     ] 
-        ++ lib.optional finalAttrs.enableSimgrid simgrid
-        ++ lib.optional finalAttrs.enableMPI mpi
-        ++ lib.optional finalAttrs.enableCUDA cudaPkgs
-        ++ lib.optional finalAttrs.enableTrace fxt
+  #     ++ lib.optional enableSimgrid simgrid
+  #      ++ lib.optional enableMPI mpi
+        ++ lib.optionals enableCUDA cudaNativePkgs
+        ++ lib.optional enableTrace fxt
         ;
 
     buildInputs = [
@@ -75,10 +73,10 @@ gcc13Stdenv.mkDerivation (finalAttrs: {
         fftwFloat
         hwloc
     ]
-        ++ lib.optional finalAttrs.enableSimgrid simgrid
-        ++ lib.optional finalAttrs.enableMPI mpi
-        ++ lib.optional finalAttrs.enableCUDA cudaPkgs
-        ++ lib.optional finalAttrs.enableTrace fxt
+ #       ++ lib.optional enableSimgrid simgrid
+ #       ++ lib.optional enableMPI mpi
+        ++ lib.optionals enableCUDA cudaBuildPkgs
+        ++ lib.optional enableTrace fxt
         ;
 
     
@@ -88,22 +86,22 @@ gcc13Stdenv.mkDerivation (finalAttrs: {
         (lib.enableFeature false "build-examples")
         (lib.enableFeature false "build-doc ")
 
-        (lib.enableFeature finalAttrs.enableStarpupy "starpupy")
-        (lib.enableFeature finalAttrs.enableSimgrid "simgrid")
+        (lib.enableFeature enableStarpupy "starpupy")
+        #(lib.enableFeature enableSimgrid "simgrid")
 
          # Static linking is mandatory for smpi
-        (lib.enableFeature finalAttrs.enableMPI "mpi")
-        (lib.enableFeature finalAttrs.enableMPI "mpi-check")
-        (lib.enableFeature (!finalAttrs.enableMPI) "shared") 
+        #(lib.enableFeature enableMPI "mpi")
+        #(lib.enableFeature enableMPI "mpi-check")
+        #(lib.enableFeature (!enableMPI) "shared") 
 
-        (lib.optional finalAttrs.enableTrace "--with-fxt=${fxt}")
+        (lib.optional enableTrace "--with-fxt=${fxt}")
     ] 
     ++ (
-        if finalAttrs.compileAsRelease then [ "--enable-fast" ]
+        if compileAsRelease then [ "--enable-fast" ]
         else [ "--enable-debug" "--enable-verbose" "--enable-spinlock-check" ]
     ) 
-    ++ (lib.optional (finalAttrs.maxBuffers != 8) "--enable-maxbuffers=${toString finalAttrs.maxBuffers}")
-    ++ finalAttrs.extraOptions
+    ++ (lib.optional (maxBuffers != 8) "--enable-maxbuffers=${toString maxBuffers}")
+    ++ extraOptions
     ;
 
 
