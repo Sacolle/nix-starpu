@@ -35,11 +35,17 @@
   extraOptions ? []
 }:
 let 
-    cudaBuildPkgs = with cudaPackages; [
+    cudaNativePkgs = with cudaPackages; [
         cuda_nvcc
     ];
-    cudaNativePkgs = with cudaPackages; [
-        cuda_cudart cuda_cccl cuda_nvml_dev
+    cudaBuildPkgs = with cudaPackages; [
+        cuda_cudart
+        cuda_cccl 
+        cuda_nvml_dev 
+        libcublas 
+        libcusparse
+        libcusolver
+        libcufft
     ];
 in
 gcc13Stdenv.mkDerivation (f: {
@@ -80,6 +86,7 @@ gcc13Stdenv.mkDerivation (f: {
         ;
 
     
+    NVCCFLAGS = lib.optionalString enableCUDA "-std=c++14";
 
     configureFlags = [
         (lib.enableFeature true "quick-check")
@@ -107,20 +114,20 @@ gcc13Stdenv.mkDerivation (f: {
 
       # No need to add flags for CUDA, it should be detected by ./configure
 
-      patchPhase = ''
+    patchPhase = ''
         # Patch shebangs recursively because a lot of scripts are used
         shopt -s globstar
         patchShebangs --build **/*.in
-      '';
+    '';
 
-      postConfigure = ''
+    postConfigure = ''
         # Patch shebangs recursively because a lot of scripts are used
         shopt -s globstar
         patchShebangs --build **/*.sh
-      '';
+    '';
 
-      enableParallelBuilding = true;
-      doCheck = true;
+    enableParallelBuilding = true;
+    doCheck = true;
 })
 
 

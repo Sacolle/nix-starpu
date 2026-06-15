@@ -31,5 +31,10 @@
             default = StarPU;
             inherit fxt StarPU StarPUCuda;
         };
+        devShells.${system} = {
+            test = pkgs.mkShell {
+                buildInputs = [ pkgs.pkg-config pkgs.hwloc pkgs.cudaPackages.cuda_cuobjdump StarPUCuda ];
+            };
+        };
     };
 }
