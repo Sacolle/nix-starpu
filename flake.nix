@@ -12,15 +12,7 @@
     outputs = { self, nixpkgs }: 
     let 
         system = "x86_64-linux";
-        pkgsconfig = { 
-            inherit system; 
-            config = { 
-                allowUnfree = true;
-                cudaSupport = true;
-                cudaVersion = "13";
-            };
-        };
-        pkgs = import nixpkgs pkgsconfig;
+        pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
 
         fxt = pkgs.callPackage ./fxt.nix { static = true; };
         StarPU = pkgs.callPackage ./starpu.nix { inherit fxt; };

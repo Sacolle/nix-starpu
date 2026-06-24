@@ -35,6 +35,8 @@
   extraOptions ? []
 }:
 let 
+    cudaHwloc = hwloc.override { cudaSupport = true; inherit cudaPackages; };
+
     cudaNativePkgs = with cudaPackages; [
         cuda_nvcc
     ];
@@ -47,6 +49,8 @@ let
         libcusolver
         libcufft
     ];
+
+    my-hwloc = if enableCUDA then cudaHwloc else hwloc;
 in
 gcc13Stdenv.mkDerivation (f: {
     pname = "StarPU";
@@ -59,7 +63,7 @@ gcc13Stdenv.mkDerivation (f: {
     };
     nativeBuildInputs = [
         pkg-config
-        hwloc
+        my-hwloc
         libtool
         writableTmpDirAsHomeHook
         autoreconfHook
@@ -77,7 +81,7 @@ gcc13Stdenv.mkDerivation (f: {
         libX11
         fftw
         fftwFloat
-        hwloc
+        my-hwloc
     ]
  #       ++ lib.optional enableSimgrid simgrid
  #       ++ lib.optional enableMPI mpi
