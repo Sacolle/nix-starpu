@@ -35,7 +35,10 @@
   extraOptions ? []
 }:
 let 
-    cudaHwloc = hwloc.override { cudaSupport = true; inherit cudaPackages; };
+    cudaHwloc = hwloc.override { 
+        inherit cudaPackages; 
+        enableCuda = true;
+    };
 
     cudaNativePkgs = with cudaPackages; [
         cuda_nvcc
