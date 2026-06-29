@@ -3,7 +3,7 @@
   # derivation dependencies
   lib,
   fetchurl,
-  gcc13Stdenv,
+  stdenv,
   writableTmpDirAsHomeHook,
   autoreconfHook,
   # starpu dependencies
@@ -55,7 +55,7 @@ let
 
     my-hwloc = if enableCUDA then cudaHwloc else hwloc;
 in
-gcc13Stdenv.mkDerivation (f: {
+stdenv.mkDerivation (f: {
     pname = "StarPU";
     system = "x86_64-linux";
     version = "1.4.7";

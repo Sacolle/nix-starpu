@@ -15,18 +15,25 @@
         pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
 
         fxt = pkgs.callPackage ./fxt.nix { static = true; };
-        StarPU = pkgs.callPackage ./starpu.nix { inherit fxt; };
-        StarPUCuda = pkgs.callPackage ./starpu.nix { inherit fxt; enableCUDA = true; };
+        StarPU = pkgs.callPackage ./starpu.nix { 
+            inherit fxt; 
+            stdenv = pkgs.gcc13Stdenv;
+        };
     in
     {
         packages.${system} = {
             default = StarPU;
-            inherit fxt StarPU StarPUCuda;
+            inherit fxt StarPU;
         };
+        /*
         devShells.${system} = {
             test = pkgs.mkShell {
-                buildInputs = [ pkgs.pkg-config pkgs.hwloc pkgs.cudaPackages.cuda_cuobjdump StarPUCuda ];
+                buildInputs = [ 
+                    pkgs.pkg-config 
+                    pkgs.hwloc 
+                    pkgs.cudaPackages.cuda_cuobjdump 
+                ];
             };
-        };
+        };*/
     };
 }
