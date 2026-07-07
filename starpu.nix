@@ -24,6 +24,7 @@
 
   # Options
   maxBuffers ? 8,
+  enableVerbose ? true,
   compileAsRelease ? false,
   enableStarpupy ? false,
 
@@ -92,6 +93,10 @@ stdenv.mkDerivation (f: {
         ++ lib.optional enableTrace fxt
         ;
 
+    propagatedBuildInputs = [
+       my-hwloc
+    ] ++ lib.optionals enableCUDA cudaBuildPkgs;
+
     
     NVCCFLAGS = lib.optionalString enableCUDA "-std=c++14";
 
@@ -99,6 +104,7 @@ stdenv.mkDerivation (f: {
         (lib.enableFeature true "quick-check")
         (lib.enableFeature false "build-examples")
         (lib.enableFeature false "build-doc ")
+        (lib.enableFeature enableVerbose "verbose")
 
         (lib.enableFeature enableStarpupy "starpupy")
         #(lib.enableFeature enableSimgrid "simgrid")
@@ -112,7 +118,7 @@ stdenv.mkDerivation (f: {
     ] 
     ++ (
         if compileAsRelease then [ "--enable-fast" ]
-        else [ "--enable-debug" "--enable-verbose" "--enable-spinlock-check" ]
+        else [ "--enable-debug" "--enable-spinlock-check" ]
     ) 
     ++ (lib.optional (maxBuffers != 8) "--enable-maxbuffers=${toString maxBuffers}")
     ++ extraOptions
