@@ -59,11 +59,11 @@ in
 stdenv.mkDerivation (f: {
     pname = "StarPU";
     system = "x86_64-linux";
-    version = "1.4.7";
+    version = "1.4.12";
 
     src = fetchurl {
         url = "http://files.inria.fr/starpu/starpu-${f.version}/starpu-${f.version}.tar.gz";
-        hash = "sha256-HrPfVRCJFT/m4LFyrZURhDS0qB6p6qWiw4cl0NtTsT4=";
+        hash = "sha256-oYbg9PwnmHfss21TpnLAfZ+9VIORcsBR3mDirNXJSZA=";
     };
     nativeBuildInputs = [
         pkg-config

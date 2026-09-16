@@ -11,10 +11,7 @@
     let 
         pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
         fxt = pkgs.callPackage ./fxt.nix { static = true; };
-        StarPU = pkgs.callPackage ./starpu.nix { 
-            inherit fxt; 
-            stdenv = pkgs.gcc13Stdenv;
-        };
+        StarPU = pkgs.callPackage ./starpu.nix { inherit fxt; };
     in
     {
         packages = {
