@@ -12,11 +12,12 @@
         pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
         fxt = pkgs.callPackage ./fxt.nix { static = true; };
         StarPU = pkgs.callPackage ./starpu.nix { inherit fxt; };
+        StarPU-MPI = pkgs.callPackage ./starpu.nix { inherit fxt; enableMPI = true; };
     in
     {
         packages = {
             default = StarPU;
-            inherit fxt StarPU;
+            inherit fxt StarPU StarPU-MPI;
         };
     });
 }

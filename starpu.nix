@@ -30,7 +30,7 @@
 
   # have not tested this options yet
   #enableSimgrid ? false,
-  #enableMPI ? false,
+  enableMPI ? false,
   enableCUDA ? false,
   enableTrace ? false,
   extraOptions ? []
@@ -75,7 +75,7 @@ stdenv.mkDerivation (f: {
 
     ] 
   #     ++ lib.optional enableSimgrid simgrid
-  #      ++ lib.optional enableMPI mpi
+        ++ lib.optional enableMPI mpi
         ++ lib.optionals enableCUDA cudaNativePkgs
         ++ lib.optional enableTrace fxt
         ;
@@ -88,7 +88,7 @@ stdenv.mkDerivation (f: {
         my-hwloc
     ]
  #       ++ lib.optional enableSimgrid simgrid
- #       ++ lib.optional enableMPI mpi
+        ++ lib.optional enableMPI mpi
         ++ lib.optionals enableCUDA cudaBuildPkgs
         ++ lib.optional enableTrace fxt
         ;
@@ -110,9 +110,9 @@ stdenv.mkDerivation (f: {
         #(lib.enableFeature enableSimgrid "simgrid")
 
          # Static linking is mandatory for smpi
-        #(lib.enableFeature enableMPI "mpi")
-        #(lib.enableFeature enableMPI "mpi-check")
-        #(lib.enableFeature (!enableMPI) "shared") 
+        (lib.enableFeature enableMPI "mpi")
+        (lib.enableFeature enableMPI "mpi-check")
+        (lib.enableFeature (!enableMPI) "shared") 
 
         (lib.optional enableTrace "--with-fxt=${fxt}")
     ] 
@@ -131,6 +131,11 @@ stdenv.mkDerivation (f: {
         # Patch shebangs recursively because a lot of scripts are used
         shopt -s globstar
         patchShebangs --build **/*.in
+
+        # GNU make >= 4.4 puts a "--" before variable overrides in MAKEFLAGS,
+        # so appending "-jN" to it turns it into a target. Pass it as an argument instead.
+        substituteInPlace mpi/GNUmakefile.in \
+            --replace-fail 'MAKEFLAGS="$(MAKEFLAGS) $$JOBS"' '$$JOBS'
     '';
 
     postConfigure = ''
