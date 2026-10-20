@@ -95,7 +95,9 @@ stdenv.mkDerivation (f: {
 
     propagatedBuildInputs = [
        my-hwloc
-    ] ++ lib.optionals enableCUDA cudaBuildPkgs;
+    ]   
+        ++ lib.optional enableMPI mpi;
+        ++ lib.optionals enableCUDA cudaBuildPkgs;
 
     
     NVCCFLAGS = lib.optionalString enableCUDA "-std=c++14";
