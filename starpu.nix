@@ -96,7 +96,7 @@ stdenv.mkDerivation (f: {
     propagatedBuildInputs = [
        my-hwloc
     ]   
-        ++ lib.optional enableMPI mpi;
+        ++ lib.optional enableMPI mpi
         ++ lib.optionals enableCUDA cudaBuildPkgs;
 
     
